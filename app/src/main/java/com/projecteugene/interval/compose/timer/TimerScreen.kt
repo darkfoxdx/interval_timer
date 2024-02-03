@@ -8,11 +8,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.projecteugene.interval.data.TimerData
 import com.projecteugene.interval.viewmodel.TimerViewModel
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun TimerScreen(
@@ -87,6 +94,19 @@ fun TimerScreen(
                 modifier = modifier.padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(
+                    text = elapsedTime.seconds.toComponents { hours, minutes, seconds, _ ->
+                        "%02dh %02dm %02ds".format(hours, minutes, seconds)
+                    },
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .wrapContentSize(Alignment.Center),
+                )
+                IconButton(onClick = { onTimerStart() }) {
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = "Play")
+                }
                 TimerList(
                     timers = timers,
                     onClick = onClick,

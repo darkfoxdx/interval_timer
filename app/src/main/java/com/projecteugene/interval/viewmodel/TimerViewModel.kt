@@ -1,8 +1,11 @@
 package com.projecteugene.interval.viewmodel
 
+import android.app.Application
+import android.media.MediaPlayer
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.projecteugene.interval.R
 import com.projecteugene.interval.data.TimerData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -18,8 +21,9 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class TimerViewModel @Inject internal constructor(
+    private val application: Application,
     private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
     private val _timers = MutableStateFlow<List<TimerData>>(listOf())
     private val _elapsedTime = MutableStateFlow(0L)
     private val _showDialog = MutableStateFlow(false)
@@ -27,6 +31,7 @@ class TimerViewModel @Inject internal constructor(
     val timers = _timers.asStateFlow()
     val elapsedTime = _elapsedTime.asStateFlow()
     val showDialog = _showDialog.asStateFlow()
+    private var mp: MediaPlayer = MediaPlayer.create(application.applicationContext, R.raw.tone1)
 
     fun onShowDialog() {
         _showDialog.update {
@@ -66,6 +71,9 @@ class TimerViewModel @Inject internal constructor(
             while (true) {
                 delay(1000)
                 _elapsedTime.value++
+                if (_elapsedTime.value.toInt() % 10 == 0) {
+                    mp.start()
+                }
             }
         }
     }
@@ -82,5 +90,6 @@ class TimerViewModel @Inject internal constructor(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        mp.release()
     }
 }
