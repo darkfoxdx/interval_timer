@@ -101,7 +101,7 @@ class TimerViewModel @Inject internal constructor(
             mp.start()
         }
 
-        if (!_isRepeated.value && elapsedTime == total) {
+        if (!_isRepeated.value && elapsedTime > total) {
             stopTimer()
             return
         }

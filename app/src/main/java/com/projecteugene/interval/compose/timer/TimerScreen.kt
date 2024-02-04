@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
@@ -25,8 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.projecteugene.interval.data.TimerData
 import com.projecteugene.interval.viewmodel.TimerViewModel
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -142,8 +146,10 @@ fun TimerScreen(
             }
             TimerList(
                 modifier = modifier.weight(1f),
-                timers = timers, currentTimer = currentTimer,
-                onClick = onClick, onDelete = onDelete
+                timers = timers,
+                currentTimer = currentTimer,
+                onClick = onClick,
+                onDelete = onDelete
             )
             Row(
                 modifier = modifier
@@ -185,10 +191,14 @@ fun TimerList(
     onClick: () -> Unit,
     onDelete: (Int) -> Unit
 ) {
+    val composableScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier.imePadding(), contentPadding = PaddingValues(
+        modifier = modifier.imePadding(),
+        contentPadding = PaddingValues(
             horizontal = 16.dp, vertical = 16.dp
-        )
+        ),
+        state = listState
     ) {
         itemsIndexed(
             timers
@@ -200,6 +210,12 @@ fun TimerList(
             }) {
                 onDelete(index)
             }
+        }
+    }
+
+    LaunchedEffect(currentTimer.first ?: 0) {
+        composableScope.launch {
+            listState.animateScrollToItem(currentTimer.first ?: 0)
         }
     }
 }
