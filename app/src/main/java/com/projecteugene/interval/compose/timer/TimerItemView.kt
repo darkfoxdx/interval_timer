@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.projecteugene.interval.data.TimerData
@@ -25,10 +26,18 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimerItemView(data: TimerData, onClick: () -> Unit, onDelete: () -> Unit) {
+fun TimerItemView(
+    data: TimerData,
+    highlighted: Boolean,
+    countDownTimer: Long?,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        colors = CardDefaults.cardColors(
+            containerColor = if (highlighted) Color.Yellow else MaterialTheme.colorScheme.secondaryContainer
+        ),
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp)
@@ -45,7 +54,7 @@ fun TimerItemView(data: TimerData, onClick: () -> Unit, onDelete: () -> Unit) {
                         .wrapContentWidth(Alignment.CenterHorizontally)
                 )
                 Text(
-                    text = data.timeInSeconds.seconds.toComponents { hours, minutes, seconds, _ ->
+                    text = (countDownTimer ?: data.timeInSeconds).seconds.toComponents { hours, minutes, seconds, _ ->
                         "%02dh %02dm %02ds".format(hours, minutes, seconds)
                     },
                     style = MaterialTheme.typography.titleMedium,
@@ -71,5 +80,5 @@ fun TimerItemView(data: TimerData, onClick: () -> Unit, onDelete: () -> Unit) {
 @Composable
 private fun TimerScreenPreview(
 ) {
-    TimerItemView(TimerData("Test", 100L), {}, {})
+    TimerItemView(TimerData("Test", 100L), true, 10L, {}) {}
 }
