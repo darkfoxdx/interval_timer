@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.projecteugene.interval.data.TimerData
+import com.projecteugene.interval.ui.theme.customColorsPalette
 import com.projecteugene.interval.viewmodel.TimerViewModel
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -167,7 +168,7 @@ fun TimerScreen(
                 Spacer(modifier = modifier.weight(weight = 1f))
                 Button(
                     onClick = { onDeleteAll() }, colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red
+                        containerColor = MaterialTheme.customColorsPalette.extraColor3
                     ), modifier = modifier.padding(horizontal = 8.dp)
                 ) {
                     Text("Delete All")

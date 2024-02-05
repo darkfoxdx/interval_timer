@@ -9,11 +9,21 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+
+val MaterialTheme.customColorsPalette: CustomColorsPalette
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalCustomColorsPalette.current
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -37,6 +47,31 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+@Immutable
+data class CustomColorsPalette(
+    val extraColor1: Color = LightExtraColor1,
+    val extraColor2: Color = LightExtraColor2,
+    val extraColor3: Color = LightExtraColor3
+)
+
+val LightExtraColor1 = Color(color = 0xFF29B6F6)
+val LightExtraColor2 = Color(color = 0xFF26A69A)
+val LightExtraColor3 = Color(color = 0xFFEF5350)
+
+val DarkExtraColor1 = Color(color = 0xFF0277BD)
+val DarkExtraColor2 = Color(color = 0xFF00695C)
+val DarkExtraColor3 = Color(color = 0xFFC62828)
+
+val LightCustomColorsPalette = CustomColorsPalette()
+
+val DarkCustomColorsPalette = CustomColorsPalette(
+    extraColor1 = DarkExtraColor1,
+    extraColor2 = DarkExtraColor2,
+    extraColor3 = DarkExtraColor3
+)
+
+val LocalCustomColorsPalette = staticCompositionLocalOf { CustomColorsPalette() }
+
 @Composable
 fun IntervalTimerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -53,6 +88,12 @@ fun IntervalTimerTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
+
+    // logic for which custom palette to use
+    val customColorsPalette =
+        if (darkTheme) DarkCustomColorsPalette
+        else LightCustomColorsPalette
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -62,9 +103,14 @@ fun IntervalTimerTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalCustomColorsPalette provides customColorsPalette // our custom palette
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
+
 }
