@@ -1,11 +1,11 @@
 package com.projecteugene.interval.viewmodel
 
 import android.app.Application
-import android.media.MediaPlayer
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.projecteugene.interval.R
 import com.projecteugene.interval.data.TimerData
+import com.projecteugene.interval.utilities.MediaPlayerHelper
+import com.projecteugene.interval.utilities.VibratorHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,12 +15,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * The ViewModel for plant list.
- */
 @HiltViewModel
-class TimerViewModel @Inject internal constructor(
-    application: Application
+class TimerViewModel @Inject constructor(
+    application: Application,
+    private val vibratorHelper: VibratorHelper,
+    private val mediaPlayerHelper: MediaPlayerHelper,
 ) : AndroidViewModel(application) {
     private val _timers = MutableStateFlow<List<TimerData>>(listOf())
     private val _cumulativeTimer = MutableStateFlow<List<Long>>(listOf())
@@ -36,8 +35,6 @@ class TimerViewModel @Inject internal constructor(
     val showDialog = _showDialog.asStateFlow()
     val isRepeated = _isRepeated.asStateFlow()
     val currentTimer = _currentTimer.asStateFlow()
-
-    private var mp: MediaPlayer = MediaPlayer.create(application.applicationContext, R.raw.tone1)
 
     fun onToggleRepeat() {
         _isRepeated.update {
@@ -88,8 +85,14 @@ class TimerViewModel @Inject internal constructor(
     }
 
     private fun checkTime() {
-        val elapsedTime = _elapsedTime.value
         val total = _timers.value.sumOf { it.timeInSeconds }
+        val elapsedTime = _elapsedTime.value
+
+        if (!_isRepeated.value && elapsedTime > total) {
+            stopTimer()
+            return
+        }
+
         val realignedTime = if (elapsedTime.toInt() % total.toInt() == 0) total else elapsedTime % total
         val cumulativeTimer = _cumulativeTimer.value
         val position = cumulativeTimer.indexOfFirst { realignedTime <= it }
@@ -98,12 +101,8 @@ class TimerViewModel @Inject internal constructor(
             it.copy(first = position, second = countDownTimer)
         }
         if (countDownTimer == 0L) {
-            mp.start()
-        }
-
-        if (!_isRepeated.value && elapsedTime > total) {
-            stopTimer()
-            return
+            mediaPlayerHelper.start()
+            vibratorHelper.vibrate()
         }
 
     }
@@ -134,6 +133,6 @@ class TimerViewModel @Inject internal constructor(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
-        mp.release()
+        mediaPlayerHelper.release()
     }
 }
