@@ -28,7 +28,7 @@ class DataStoreManager @Inject constructor(@ApplicationContext private val conte
 
     suspend fun toggleRepeatable() {
         context.dataStore.edit { settings ->
-            settings[prefRepeatable] = settings[prefRepeatable]?.not() ?: false
+            settings[prefRepeatable] = settings[prefRepeatable]?.not() ?: true
         }
     }
 }
