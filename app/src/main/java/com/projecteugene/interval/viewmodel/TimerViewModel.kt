@@ -27,6 +27,7 @@ class TimerViewModel @Inject constructor(
     private val timerDataRepository: TimerDataRepository
 ) : ViewModel() {
     private val _timerUIState = MutableStateFlow(TimerUIState())
+    private var timerJob: Job? = null
 
     val timers = timerDataRepository.getTimers()
     val isRepeated = dataStoreManager.isRepeatable()
@@ -35,7 +36,6 @@ class TimerViewModel @Inject constructor(
     private val _cumulativeTimer = timers.map { data ->
         data.map { it.timeInSeconds }.runningReduce { acc, timerData -> acc + timerData }
     }
-
 
     fun onToggleRepeat() {
         viewModelScope.launch {
@@ -54,8 +54,6 @@ class TimerViewModel @Inject constructor(
             it.copy(showDialog = false)
         }
     }
-
-    private var timerJob: Job? = null
 
     fun addTimer(newTimerData: TimerData) {
         viewModelScope.launch {
