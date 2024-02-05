@@ -46,11 +46,11 @@ fun TimerScreen(
     modifier: Modifier = Modifier,
     viewModel: TimerViewModel = hiltViewModel(),
 ) {
-    val timers by viewModel.timers.collectAsState()
+    val timers by viewModel.timers.collectAsState(initial = emptyList())
     val currentTimer by viewModel.currentTimer.collectAsState()
     val elapsedTime by viewModel.elapsedTime.collectAsState()
     val showDialog by viewModel.showDialog.collectAsState()
-    val isRepeated by viewModel.isRepeated.collectAsState()
+    val isRepeated by viewModel.isRepeated.collectAsState(initial = false)
     val isRunning by viewModel.isRunning.collectAsState()
     TimerScreen(modifier,
         timers = timers,
@@ -103,7 +103,7 @@ fun TimerScreen(
     onTimerPause: () -> Unit,
     onTimerStop: () -> Unit,
     onClick: () -> Unit,
-    onDelete: (Int) -> Unit,
+    onDelete: (TimerData) -> Unit,
     onDeleteAll: () -> Unit,
     onToggleRepeat: () -> Unit,
 ) {
@@ -189,7 +189,7 @@ fun TimerList(
     timers: List<TimerData>,
     currentTimer: Pair<Int?, Long?>,
     onClick: () -> Unit,
-    onDelete: (Int) -> Unit
+    onDelete: (TimerData) -> Unit
 ) {
     val composableScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -208,7 +208,7 @@ fun TimerList(
             TimerItemView(time, isHighlighted, countDownTimer, {
                 onClick()
             }) {
-                onDelete(index)
+                onDelete(time)
             }
         }
     }

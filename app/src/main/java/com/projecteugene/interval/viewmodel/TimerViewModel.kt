@@ -1,9 +1,10 @@
 package com.projecteugene.interval.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.projecteugene.interval.data.TimerData
+import com.projecteugene.interval.data.TimerDataRepository
+import com.projecteugene.interval.utilities.DataStoreManager
 import com.projecteugene.interval.utilities.MediaPlayerHelper
 import com.projecteugene.interval.utilities.VibratorHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,34 +12,39 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class TimerViewModel @Inject constructor(
-    application: Application,
+    private val dataStoreManager: DataStoreManager,
     private val vibratorHelper: VibratorHelper,
     private val mediaPlayerHelper: MediaPlayerHelper,
-) : AndroidViewModel(application) {
-    private val _timers = MutableStateFlow<List<TimerData>>(listOf())
-    private val _cumulativeTimer = MutableStateFlow<List<Long>>(listOf())
+    private val timerDataRepository: TimerDataRepository
+) : ViewModel() {
     private val _elapsedTime = MutableStateFlow(0L)
     private val _isRunning = MutableStateFlow(false)
     private val _showDialog = MutableStateFlow(false)
-    private val _isRepeated = MutableStateFlow(false)
     private val _currentTimer = MutableStateFlow<Pair<Int?, Long?>>(Pair(null, null))
 
-    val timers = _timers.asStateFlow()
+    val timers = timerDataRepository.getTimers()
     val elapsedTime = _elapsedTime.asStateFlow()
     val isRunning = _isRunning.asStateFlow()
     val showDialog = _showDialog.asStateFlow()
-    val isRepeated = _isRepeated.asStateFlow()
+    val isRepeated = dataStoreManager.isRepeatable()
     val currentTimer = _currentTimer.asStateFlow()
 
+    private val _cumulativeTimer = timers.map { data ->
+        data.map { it.timeInSeconds }.runningReduce { acc, timerData -> acc + timerData }
+    }
+
+
     fun onToggleRepeat() {
-        _isRepeated.update {
-            !it
+        viewModelScope.launch {
+            dataStoreManager.toggleRepeatable()
         }
     }
 
@@ -56,45 +62,36 @@ class TimerViewModel @Inject constructor(
 
     private var timerJob: Job? = null
 
-    private fun updateCumulativeList() {
-        _cumulativeTimer.update {
-            _timers.value
-                .map { it.timeInSeconds }
-                .runningReduce { acc, timerData -> acc + timerData }
-        }
-    }
-
     fun addTimer(newTimerData: TimerData) {
-        _timers.update {list ->
-            list.plus(newTimerData)
+        viewModelScope.launch {
+            timerDataRepository.insertTimerData(newTimerData)
         }
-        updateCumulativeList()
     }
 
-    fun removeTimer(position: Int) {
-        _timers.update {list ->
-            list.filterIndexed { index, _ -> index != position}
+    fun removeTimer(timerData: TimerData) {
+        viewModelScope.launch {
+            timerDataRepository.removeTimerData(timerData)
         }
-        updateCumulativeList()
     }
 
     fun removeAllTimer() {
-        _timers.update {
-            emptyList()
+        viewModelScope.launch {
+            timerDataRepository.removeAll()
         }
     }
 
-    private fun checkTime() {
-        val total = _timers.value.sumOf { it.timeInSeconds }
+    private suspend fun checkTime() {
+        val total = timers.first().sumOf { it.timeInSeconds }
         val elapsedTime = _elapsedTime.value
 
-        if (!_isRepeated.value && elapsedTime > total) {
+        if (!isRepeated.first() && elapsedTime > total) {
             stopTimer()
             return
         }
 
-        val realignedTime = if (elapsedTime.toInt() % total.toInt() == 0) total else elapsedTime % total
-        val cumulativeTimer = _cumulativeTimer.value
+        val realignedTime =
+            if (elapsedTime.toInt() % total.toInt() == 0) total else elapsedTime % total
+        val cumulativeTimer = _cumulativeTimer.first()
         val position = cumulativeTimer.indexOfFirst { realignedTime <= it }
         val countDownTimer = cumulativeTimer[position] - realignedTime
         _currentTimer.update {
@@ -106,6 +103,7 @@ class TimerViewModel @Inject constructor(
         }
 
     }
+
     fun startTimer() {
         _isRunning.value = true
         timerJob?.cancel()
