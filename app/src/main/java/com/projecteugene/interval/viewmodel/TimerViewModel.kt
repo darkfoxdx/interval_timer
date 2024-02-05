@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.projecteugene.interval.data.TimerData
 import com.projecteugene.interval.data.TimerDataRepository
+import com.projecteugene.interval.data.TimerUIState
 import com.projecteugene.interval.utilities.DataStoreManager
 import com.projecteugene.interval.utilities.MediaPlayerHelper
 import com.projecteugene.interval.utilities.VibratorHelper
@@ -25,17 +26,11 @@ class TimerViewModel @Inject constructor(
     private val mediaPlayerHelper: MediaPlayerHelper,
     private val timerDataRepository: TimerDataRepository
 ) : ViewModel() {
-    private val _elapsedTime = MutableStateFlow(0L)
-    private val _isRunning = MutableStateFlow(false)
-    private val _showDialog = MutableStateFlow(false)
-    private val _currentTimer = MutableStateFlow<Pair<Int?, Long?>>(Pair(null, null))
+    private val _timerUIState = MutableStateFlow(TimerUIState())
 
     val timers = timerDataRepository.getTimers()
-    val elapsedTime = _elapsedTime.asStateFlow()
-    val isRunning = _isRunning.asStateFlow()
-    val showDialog = _showDialog.asStateFlow()
     val isRepeated = dataStoreManager.isRepeatable()
-    val currentTimer = _currentTimer.asStateFlow()
+    val timerUIState = _timerUIState.asStateFlow()
 
     private val _cumulativeTimer = timers.map { data ->
         data.map { it.timeInSeconds }.runningReduce { acc, timerData -> acc + timerData }
@@ -49,14 +44,14 @@ class TimerViewModel @Inject constructor(
     }
 
     fun onShowDialog() {
-        _showDialog.update {
-            true
+        _timerUIState.update {
+            it.copy(showDialog = true)
         }
     }
 
     fun onDismiss() {
-        _showDialog.update {
-            false
+        _timerUIState.update {
+            it.copy(showDialog = false)
         }
     }
 
@@ -82,7 +77,7 @@ class TimerViewModel @Inject constructor(
 
     private suspend fun checkTime() {
         val total = timers.first().sumOf { it.timeInSeconds }
-        val elapsedTime = _elapsedTime.value
+        val elapsedTime = _timerUIState.value.elapsedTime
 
         if (!isRepeated.first() && elapsedTime > total) {
             stopTimer()
@@ -94,8 +89,8 @@ class TimerViewModel @Inject constructor(
         val cumulativeTimer = _cumulativeTimer.first()
         val position = cumulativeTimer.indexOfFirst { realignedTime <= it }
         val countDownTimer = cumulativeTimer[position] - realignedTime
-        _currentTimer.update {
-            it.copy(first = position, second = countDownTimer)
+        _timerUIState.update {
+            it.copy(currentTimer = Pair(first = position, second = countDownTimer))
         }
         if (countDownTimer == 0L) {
             mediaPlayerHelper.start()
@@ -105,26 +100,32 @@ class TimerViewModel @Inject constructor(
     }
 
     fun startTimer() {
-        _isRunning.value = true
+        _timerUIState.update {
+            it.copy(isRunning = true)
+        }
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
             while (true) {
                 delay(1000)
-                _elapsedTime.value++
+                _timerUIState.update {
+                    it.copy(elapsedTime = it.elapsedTime + 1)
+                }
                 checkTime()
             }
         }
     }
 
     fun pauseTimer() {
-        _isRunning.value = false
+        _timerUIState.update {
+            it.copy(isRunning = false)
+        }
         timerJob?.cancel()
     }
 
     fun stopTimer() {
-        _isRunning.value = false
-        _currentTimer.value = Pair(null, null)
-        _elapsedTime.value = 0
+        _timerUIState.update {
+            it.copy(isRunning = false, currentTimer = Pair(null, null), elapsedTime = 0)
+        }
         timerJob?.cancel()
     }
 

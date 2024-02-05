@@ -46,18 +46,15 @@ fun TimerScreen(
     modifier: Modifier = Modifier,
     viewModel: TimerViewModel = hiltViewModel(),
 ) {
+    val timerUIState by viewModel.timerUIState.collectAsState()
     val timers by viewModel.timers.collectAsState(initial = emptyList())
-    val currentTimer by viewModel.currentTimer.collectAsState()
-    val elapsedTime by viewModel.elapsedTime.collectAsState()
-    val showDialog by viewModel.showDialog.collectAsState()
     val isRepeated by viewModel.isRepeated.collectAsState(initial = false)
-    val isRunning by viewModel.isRunning.collectAsState()
     TimerScreen(modifier,
         timers = timers,
-        currentTimer = currentTimer,
-        elapsedTime = elapsedTime,
+        currentTimer = timerUIState.currentTimer,
+        elapsedTime = timerUIState.elapsedTime,
         isRepeated = isRepeated,
-        isRunning = isRunning,
+        isRunning = timerUIState.isRunning,
         onTimerStart = {
             viewModel.startTimer()
         },
@@ -80,7 +77,7 @@ fun TimerScreen(
             viewModel.onToggleRepeat()
         })
 
-    if (showDialog) {
+    if (timerUIState.showDialog) {
         TimePickerDialog(onDismissRequest = {
             viewModel.onDismiss()
         }, onConfirmation = {
