@@ -231,8 +231,10 @@ fun TimerList(
     }
 }
 
-@Preview
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Normal")
+@Preview(name = "Dark mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Tablet",device = "spec:width=1920dp,height=1080dp,dpi=160")
+@Preview(name = "Tablet Dark mode",device = "spec:width=1920dp,height=1080dp,dpi=160", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun TimerScreenPreview(
 ) {
