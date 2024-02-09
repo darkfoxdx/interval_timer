@@ -1,7 +1,7 @@
 package com.projecteugene.interval.compose.timer
 
 import VerticalGrid
-import androidx.compose.foundation.BorderStroke
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +22,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,13 +31,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.projecteugene.interval.data.TimerData
+import com.projecteugene.interval.ui.theme.IntervalTimerTheme
+import com.projecteugene.interval.ui.theme.customColorsPalette
 
 @Composable
 fun TimerDismissButton(
@@ -50,11 +50,10 @@ fun TimerDismissButton(
             .size(50.dp)
             .wrapContentSize(align = Alignment.Center),  //avoid the oval shape
         shape = CircleShape,
-        border = BorderStroke(1.dp, Color.Blue),
         contentPadding = PaddingValues(0.dp),  //avoid the little icon
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFFFFB4AB),
-            contentColor = Color.Blue
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.customColorsPalette.redButtonColor
         )
     ) {
         Icon(imageVector = Icons.Rounded.Close, contentDescription = "Confirm")
@@ -72,11 +71,10 @@ fun TimerConfirmButton(
             .size(50.dp)
             .wrapContentSize(align = Alignment.Center),  //avoid the oval shape
         shape = CircleShape,
-        border = BorderStroke(1.dp, Color.Blue),
         contentPadding = PaddingValues(0.dp),  //avoid the little icon
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF8BDA67),
-            contentColor = Color.Blue
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.customColorsPalette.greenButtonColor
         ),
         enabled = enabled
     ) {
@@ -89,16 +87,16 @@ fun TimerPickerButton(
     onClick: (String) -> Unit,
     value: String
 ) {
-    OutlinedButton(
+    Button(
         onClick = { onClick(value) },
         modifier = Modifier
             .size(50.dp)
             .wrapContentSize(align = Alignment.Center),  //avoid the oval shape
         shape = CircleShape,
-        border = BorderStroke(1.dp, Color.Blue),
         contentPadding = PaddingValues(0.dp),  //avoid the little icon
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = Color.Blue
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
         Text(
@@ -113,16 +111,16 @@ fun TimerPickerButton(
     value: ImageVector,
     contentDescriptor: String = ""
 ) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
         modifier = Modifier
             .size(50.dp)
             .wrapContentSize(align = Alignment.Center),  //avoid the oval shape
         shape = CircleShape,
-        border = BorderStroke(1.dp, Color.Blue),
         contentPadding = PaddingValues(0.dp),  //avoid the little icon
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = Color.Blue
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Icon(imageVector = value, contentDescription = contentDescriptor)
@@ -133,9 +131,11 @@ fun TimerPickerButton(
 fun TimePickerDialog(
     onDismissRequest: () -> Unit,
     onConfirmation: (TimerData) -> Unit,
+    defaultName: String = "",
+    defaultInput: String = "",
 ) {
-    var name by remember { mutableStateOf("") }
-    var input by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(defaultName) }
+    var input by remember { mutableStateOf(defaultInput) }
     val maxCharacters = 100
     val maxLength = 6
     val hours = input.padStart(6, '0')
@@ -281,10 +281,16 @@ fun TimePickerDialog(
 
 
 @Preview
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun TimerWidgetPreview() {
-    TimePickerDialog(
-        onDismissRequest = {},
-        onConfirmation = {}
-    )
+    IntervalTimerTheme {
+        // A surface container using the 'background' color from the theme
+        TimePickerDialog(
+            onDismissRequest = {},
+            onConfirmation = {},
+            defaultInput = "1",
+            defaultName = "1",
+        )
+    }
 }

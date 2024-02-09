@@ -1,11 +1,13 @@
 package com.projecteugene.interval.compose.timer
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -22,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -32,11 +35,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.projecteugene.interval.data.TimerData
+import com.projecteugene.interval.data.TimerUIState
+import com.projecteugene.interval.ui.theme.IntervalTimerTheme
 import com.projecteugene.interval.ui.theme.customColorsPalette
 import com.projecteugene.interval.viewmodel.TimerViewModel
 import kotlinx.coroutines.launch
@@ -52,10 +56,8 @@ fun TimerScreen(
     val isRepeated by viewModel.isRepeated.collectAsState(initial = false)
     TimerScreen(modifier,
         timers = timers,
-        currentTimer = timerUIState.currentTimer,
-        elapsedTime = timerUIState.elapsedTime,
+        timerUIState = timerUIState,
         isRepeated = isRepeated,
-        isRunning = timerUIState.isRunning,
         onTimerStart = {
             viewModel.startTimer()
         },
@@ -76,16 +78,13 @@ fun TimerScreen(
         },
         onToggleRepeat = {
             viewModel.onToggleRepeat()
-        })
-
-    if (timerUIState.showDialog) {
-        TimePickerDialog(onDismissRequest = {
+        },
+        onDismiss = {
             viewModel.onDismiss()
-        }, onConfirmation = {
+        },
+        onAddTimer = {
             viewModel.addTimer(it)
-            viewModel.onDismiss()
         })
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,10 +92,8 @@ fun TimerScreen(
 fun TimerScreen(
     modifier: Modifier = Modifier,
     timers: List<TimerData>,
-    currentTimer: Pair<Int?, Long?>,
+    timerUIState: TimerUIState,
     isRepeated: Boolean,
-    isRunning: Boolean,
-    elapsedTime: Long,
     onTimerStart: () -> Unit,
     onTimerPause: () -> Unit,
     onTimerStop: () -> Unit,
@@ -104,10 +101,13 @@ fun TimerScreen(
     onDelete: (TimerData) -> Unit,
     onDeleteAll: () -> Unit,
     onToggleRepeat: () -> Unit,
+    onDismiss: () -> Unit,
+    onAddTimer: (TimerData) -> Unit,
 ) {
+
     Scaffold(topBar = {
         TopAppBar(title = { Text("Interval Timer") }, actions = {
-            if (elapsedTime > 0) {
+            if (timerUIState.elapsedTime > 0) {
                 TextButton(onClick = { onTimerStop() }) {
                     Text(text = "Reset")
                 }
@@ -126,17 +126,17 @@ fun TimerScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = elapsedTime.seconds.toComponents { hours, minutes, seconds, _ ->
+                    text = timerUIState.elapsedTime.seconds.toComponents { hours, minutes, seconds, _ ->
                         "%02dh %02dm %02ds".format(hours, minutes, seconds)
                     },
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = modifier.padding(horizontal = 8.dp),
                 )
-                if (isRunning && timers.isNotEmpty()) {
+                if (timerUIState.isRunning && timers.isNotEmpty()) {
                     IconButton(onClick = { onTimerPause() }) {
                         Icon(Icons.Default.PauseCircle, contentDescription = "Pause")
                     }
-                } else if (!isRunning && timers.isNotEmpty()) {
+                } else if (!timerUIState.isRunning && timers.isNotEmpty()) {
                     IconButton(onClick = { onTimerStart() }) {
                         Icon(Icons.Default.PlayCircle, contentDescription = "Play")
                     }
@@ -145,7 +145,7 @@ fun TimerScreen(
             TimerList(
                 modifier = modifier.weight(1f),
                 timers = timers,
-                currentTimer = currentTimer,
+                currentTimer = timerUIState.currentTimer,
                 onClick = onClick,
                 onDelete = onDelete
             )
@@ -156,30 +156,45 @@ fun TimerScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 Button(
-                    onClick = { onToggleRepeat() },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (isRepeated) Color.Cyan else Color.White
-                    ),
-                    border = BorderStroke(1.dp, Color.Blue),
-                    modifier = modifier.padding(horizontal = 8.dp)
+                    onClick = { onToggleRepeat() }, colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (isRepeated) MaterialTheme.customColorsPalette.purpleButtonColor
+                        else MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.customColorsPalette.purpleOutlineColor,
+                    ), border = BorderStroke(
+                        1.dp, MaterialTheme.customColorsPalette.purpleOutlineColor
+                    ), modifier = modifier.padding(horizontal = 8.dp)
                 ) {
                     Text("Repeat")
                 }
                 Spacer(modifier = modifier.weight(weight = 1f))
                 Button(
                     onClick = { onDeleteAll() }, colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.customColorsPalette.extraColor3
+                        containerColor = MaterialTheme.customColorsPalette.redButtonColor
                     ), modifier = modifier.padding(horizontal = 8.dp)
                 ) {
                     Text("Delete All")
                 }
-                Button(onClick = { onClick() }) {
+                Button(
+                    onClick = { onClick() }, colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.customColorsPalette.blueButtonColor
+                    )
+                ) {
                     Text("Add")
                 }
             }
         }
     })
+
+    if (timerUIState.showDialog) {
+        TimePickerDialog(onDismissRequest = {
+            onDismiss()
+        }, onConfirmation = {
+            onAddTimer(it)
+            onDismiss()
+        })
+    }
 }
+
 
 @Composable
 fun TimerList(
@@ -192,11 +207,9 @@ fun TimerList(
     val composableScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier.imePadding(),
-        contentPadding = PaddingValues(
+        modifier = modifier.imePadding(), contentPadding = PaddingValues(
             horizontal = 16.dp, vertical = 16.dp
-        ),
-        state = listState
+        ), state = listState
     ) {
         itemsIndexed(
             timers
@@ -219,29 +232,39 @@ fun TimerList(
 }
 
 @Preview
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun TimerScreenPreview(
 ) {
-    TimerScreen(
-        timers = listOf(
-            TimerData("Test 1", 100L),
-            TimerData("Test 2", 200L),
-            TimerData("Test 2", 200L),
-            TimerData("Test 2", 200L),
-            TimerData("Test 2", 200L),
-            TimerData("Test 2", 200L),
-            TimerData("Test 2", 200L),
-        ),
-        currentTimer = Pair(null, null),
-        isRepeated = true,
-        isRunning = false,
-        elapsedTime = 100L,
-        onTimerStart = {},
-        onTimerPause = {},
-        onTimerStop = {},
-        onClick = {},
-        onDelete = {},
-        onDeleteAll = {},
-        onToggleRepeat = {},
-    )
+    IntervalTimerTheme {
+        // A surface container using the 'background' color from the theme
+        Surface(
+            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        ) {
+            TimerScreen(
+                timers = listOf(
+                    TimerData("Test 1", 100L),
+                    TimerData("Test 2", 200L),
+                    TimerData("Test 2", 200L),
+                    TimerData("Test 2", 200L),
+                    TimerData("Test 2", 200L),
+                    TimerData("Test 2", 200L),
+                    TimerData("Test 2", 200L),
+                ),
+                timerUIState = TimerUIState(
+                    elapsedTime = 100L,
+                ),
+                isRepeated = true,
+                onTimerStart = {},
+                onTimerPause = {},
+                onTimerStop = {},
+                onClick = {},
+                onDelete = {},
+                onDeleteAll = {},
+                onToggleRepeat = {},
+                onDismiss = {},
+                onAddTimer = {},
+            )
+        }
+    }
 }

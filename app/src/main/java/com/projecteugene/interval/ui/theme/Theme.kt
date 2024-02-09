@@ -49,25 +49,32 @@ private val LightColorScheme = lightColorScheme(
 
 @Immutable
 data class CustomColorsPalette(
-    val extraColor1: Color = LightExtraColor1,
-    val extraColor2: Color = LightExtraColor2,
-    val extraColor3: Color = LightExtraColor3
+    val redButtonColor: Color = RedButtonColor,
+    val greenButtonColor: Color = GreenButtonColor,
+    val blueButtonColor: Color = BlueButtonColor,
+    val purpleButtonColor: Color = LightPurpleButtonColor,
+    val purpleOutlineColor: Color = LightPurpleOutlineColor,
+    val calculatorTextColor: Color = LightCalculatorTextColor,
 )
 
-val LightExtraColor1 = Color(color = 0xFF29B6F6)
-val LightExtraColor2 = Color(color = 0xFF26A69A)
-val LightExtraColor3 = Color(color = 0xFFEF5350)
+val RedButtonColor = Color(color = 0xFFEF5350)
+val GreenButtonColor = Color(color = 0xFF00C853)
+val BlueButtonColor = Color(color = 0xFF2196F3)
 
-val DarkExtraColor1 = Color(color = 0xFF0277BD)
-val DarkExtraColor2 = Color(color = 0xFF00695C)
-val DarkExtraColor3 = Color(color = 0xFFC62828)
+val LightPurpleButtonColor = Color(color = 0xFFF3E5F5)
+val LightPurpleOutlineColor = Color(color = 0xFF6A1B9A)
+val LightCalculatorTextColor = Color(color = 0xFF4E616C)
+
+val DarkPurpleButtonColor = Color(color = 0xFF9C27B0)
+val DarkPurpleOutlineColor = Color(color = 0xFFE1BEE7)
+val DarkCalculatorTextColor = Color(color = 0xFF35464F)
 
 val LightCustomColorsPalette = CustomColorsPalette()
 
 val DarkCustomColorsPalette = CustomColorsPalette(
-    extraColor1 = DarkExtraColor1,
-    extraColor2 = DarkExtraColor2,
-    extraColor3 = DarkExtraColor3
+    purpleButtonColor = DarkPurpleButtonColor,
+    purpleOutlineColor = DarkPurpleOutlineColor,
+    calculatorTextColor = DarkCalculatorTextColor
 )
 
 val LocalCustomColorsPalette = staticCompositionLocalOf { CustomColorsPalette() }
