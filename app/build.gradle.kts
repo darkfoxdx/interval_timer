@@ -14,13 +14,14 @@ android {
         applicationId = "com.projecteugene.interval"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = versioning.getVersionCode()
+        versionName = versioning.getVersionName()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+        setProperty("archivesBaseName", "interval-timer")
     }
 
     buildTypes {
